@@ -20,7 +20,16 @@ def clear_results():
 def select_image():
     global demo_image_path
     clear_results()  # Xóa nội dung trước khi chọn ảnh mới
-    demo_image_path = filedialog.askopenfilename(title="Chọn ảnh demo", filetypes=[("Image files", "*.jpg;*.png")])
+    demo_image_path = filedialog.askopenfilename(
+        title="Chọn ảnh demo", 
+        filetypes=[
+            ("Image files", (
+                "*.jpg", "*.jpeg", "*.png", "*.webp", 
+                "*.bmp", "*.gif", "*.tiff", "*.ico",
+                "*.avif"
+            ))
+        ]
+    )
     load_image(demo_image_path)
 
 # Hàm để tải ảnh vào nhãn
@@ -69,31 +78,39 @@ def orb():
 # Hàm xử lý khi nhấn nút "LBP"
 def lbp():
     data_folder = 'data'  # Đường dẫn đến folder dữ liệu
-    results = find_lbp_images(demo_image_path, data_folder, top_k=3)  # Gọi hàm từ lbp.py
+    try:
+        results = find_lbp_images(demo_image_path, data_folder)  # Gọi hàm từ lbp.py
+        if not results:
+            print("Không tìm thấy kết quả phù hợp")
+            return
 
-    # Xóa các kết quả cũ
-    clear_results()
+        # Xóa các kết quả cũ
+        clear_results()
 
-    # Hiển thị ba kết quả LBP tốt nhất
-    for i, (best_match_path, best_distance, img) in enumerate(results):
-        best_match_name = os.path.basename(best_match_path)
+        # Hiển thị ba kết quả tốt nhất
+        for i in range(min(3, len(results))):
+            # Giải nén kết quả - lbp trả về (path, distance, img)
+            best_match_path, best_distance, _ = results[i]
+            best_match_name = os.path.basename(best_match_path)
 
-        # Tạo nhãn cho kết quả với kích thước font lớn hơn
-        result_labels[i].config(text=f'{i+1}. {best_match_name} (Khoảng cách: {best_distance:.4f})', font=("Arial", 13))
-        result_labels[i].pack(pady=10)
+            # Tạo nhãn cho kết quả với kích thước font lớn hơn
+            result_labels[i].config(text=f'{i+1}. {best_match_name} (Khoảng cách: {best_distance:.4f})', font=("Arial", 13))
+            result_labels[i].pack(pady=10)
 
-        # Tải và hiển thị ảnh giống nhất
-        try:
-            target_height = root.winfo_height() // 4  # Chiếm 1/4 chiều cao của ứng dụng
-            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            img = Image.fromarray(img_rgb)
-            img.thumbnail((target_height, target_height), Image.LANCZOS)  # Giữ tỷ lệ khung hình
-            img_tk = ImageTk.PhotoImage(img)
-            match_labels[i].config(image=img_tk)
-            match_labels[i].image = img_tk  # Giữ tham chiếu đến ảnh
-            match_labels[i].pack(pady=10)
-        except Exception as e:
-            print(f'Lỗi khi mở ảnh giống nhất: {e}')
+            # Tải và hiển thị ảnh giống nhất
+            try:
+                img = Image.open(best_match_path)
+                target_height = root.winfo_height() // 4  # Chiếm 1/4 chiều cao của ứng dụng
+                img.thumbnail((target_height, target_height), Image.LANCZOS)  # Giữ tỷ lệ khung hình
+                img = ImageTk.PhotoImage(img)
+                match_labels[i].config(image=img)
+                match_labels[i].image = img  # Giữ tham chiếu đến ảnh
+                match_labels[i].pack(pady=10)
+            except Exception as e:
+                print(f'Lỗi khi mở ảnh giống nhất: {e}')
+
+    except Exception as e:
+        print(f"Lỗi trong quá trình xử lý LBP: {e}")
 
 # Hàm xử lý kéo và thả
 def drop(event):
@@ -109,8 +126,8 @@ root.title("Khuyến nghị ảnh tương tự")
 # Thiết lập kích thước cửa sổ ứng dụng
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
-window_width = int(screen_width * 0.75)
-window_height = int(screen_height * 0.75)
+window_width = int(screen_width * 0.6)
+window_height = int(screen_height * 0.6)
 
 # Căn giữa cửa sổ
 x = (screen_width // 2) - (window_width // 2)

@@ -124,5 +124,4 @@ def find_lbp_images(query_image_path, image_folder, top_k=5):
     query_image = cv2.imread(query_image_path)
     if query_image is None:
         print("Không thể đọc ảnh query")
-        return [(str(img_path), distance, img)]
-    return search_and_display_results(query_image, image_folder, top_k)
+    return search_and_display_results(query_image, image_folder)
