@@ -1,9 +1,10 @@
 import os
+import cv2
 import tkinter as tk
-from tkinter import filedialog, Label, Button
+from tkinter import filedialog, Label, Button, Frame
 from PIL import Image, ImageTk
 from orb import find_orb_images  # Import hàm từ file orb.py
-# from lbp import find_lbp_images  # Import hàm từ file lbp.py
+from lbp import find_lbp_images  # Import hàm từ file lbp.py
 from tkinterdnd2 import DND_FILES, TkinterDnD  # Nhập mô-đun kéo và thả
 
 # Hàm để xóa nội dung trong ảnh tương tự
@@ -68,14 +69,13 @@ def orb():
 # Hàm xử lý khi nhấn nút "LBP"
 def lbp():
     data_folder = 'data'  # Đường dẫn đến folder dữ liệu
-    results = find_lbp_images(demo_image_path, data_folder)  # Gọi hàm từ lbp.py
+    results = find_lbp_images(demo_image_path, data_folder, top_k=3)  # Gọi hàm từ lbp.py
 
     # Xóa các kết quả cũ
     clear_results()
 
     # Hiển thị ba kết quả LBP tốt nhất
-    for i in range(min(3, len(results))):
-        best_match_path, best_distance = results[i]
+    for i, (best_match_path, best_distance, img) in enumerate(results):
         best_match_name = os.path.basename(best_match_path)
 
         # Tạo nhãn cho kết quả với kích thước font lớn hơn
@@ -84,12 +84,13 @@ def lbp():
 
         # Tải và hiển thị ảnh giống nhất
         try:
-            img = Image.open(best_match_path)
             target_height = root.winfo_height() // 4  # Chiếm 1/4 chiều cao của ứng dụng
+            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img = Image.fromarray(img_rgb)
             img.thumbnail((target_height, target_height), Image.LANCZOS)  # Giữ tỷ lệ khung hình
-            img = ImageTk.PhotoImage(img)
-            match_labels[i].config(image=img)
-            match_labels[i].image = img  # Giữ tham chiếu đến ảnh
+            img_tk = ImageTk.PhotoImage(img)
+            match_labels[i].config(image=img_tk)
+            match_labels[i].image = img_tk  # Giữ tham chiếu đến ảnh
             match_labels[i].pack(pady=10)
         except Exception as e:
             print(f'Lỗi khi mở ảnh giống nhất: {e}')
@@ -133,13 +134,33 @@ input_image_label.pack(padx=5, pady=5, fill=tk.BOTH, expand=True)  # Lấp đầ
 select_button = Button(demo_frame, text="Chọn Ảnh", font=("Arial", 13), command=select_image)
 select_button.pack(pady=5)
 
-# Khung chứa kết quả
+# Khung chứa kết quả với thanh cuộn
 result_frame = tk.LabelFrame(frame, text="Ảnh tương tự", font=("Arial", 13))
 result_frame.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
 
+# Tạo khung cuộn
+canvas = tk.Canvas(result_frame)
+scrollbar = tk.Scrollbar(result_frame, orient="vertical", command=canvas.yview)
+scrollable_frame = tk.Frame(canvas)
+
+# Đặt canvas và frame có thể cuộn
+scrollable_frame.bind(
+    "<Configure>",
+    lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+)
+
+canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+
+# Kết nối canvas với scrollbar
+canvas.configure(yscrollcommand=scrollbar.set)
+
+# Đặt canvas và scrollbar vào khung kết quả
+canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+scrollbar.pack(side=tk.RIGHT, fill="y")
+
 # Nhãn hiển thị kết quả
-result_labels = [Label(result_frame, text="", font=("Arial", 13)) for _ in range(3)]  # Tăng kích thước font
-match_labels = [Label(result_frame) for _ in range(3)]  # Nhãn để hiển thị ảnh kết quả
+result_labels = [Label(scrollable_frame, text="", font=("Arial", 13)) for _ in range(3)]  # Tăng kích thước font
+match_labels = [Label(scrollable_frame) for _ in range(3)]  # Nhãn để hiển thị ảnh kết quả
 
 # Đặt nhãn kết quả và ảnh vào khung
 for i in range(3):

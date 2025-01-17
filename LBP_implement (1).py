@@ -1,6 +1,8 @@
 import numpy as np
 import cv2
 from pathlib import Path
+import matplotlib.pyplot as plt
+
 
 def calculate_lbp(image, neighbors=8, radius=1):
     if len(image.shape) == 3:
@@ -16,9 +18,10 @@ def calculate_lbp(image, neighbors=8, radius=1):
 
             # Lấy 8 điểm lân cận theo radius
             for n in range(neighbors):
+                # Tính tọa độ điểm lân cận
                 x = col + radius * np.cos(2 * np.pi * n / neighbors)
                 y = row - radius * np.sin(2 * np.pi * n / neighbors)
-                
+
                 # Làm tròn tọa độ
                 x = int(round(x))
                 y = int(round(y))
@@ -34,10 +37,12 @@ def calculate_lbp(image, neighbors=8, radius=1):
 
     return output
 
+
 def extract_lbp_features(image):
     lbp = calculate_lbp(image)
     hist, _ = np.histogram(lbp.ravel(), bins=256, range=(0, 256), density=True)
     return hist
+
 
 def extract_color_features(image):
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -51,6 +56,7 @@ def extract_color_features(image):
 
     return np.concatenate([h_hist, s_hist, v_hist])
 
+
 def extract_shape_features(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(gray, 50, 150)
@@ -63,6 +69,7 @@ def extract_shape_features(image):
         return -np.sign(hu_moments) * np.log10(np.abs(hu_moments) + 1e-10)
     return np.zeros(7)
 
+
 def preprocess_image(image):
     image = cv2.resize(image, (256, 256))
     if len(image.shape) == 3:
@@ -74,14 +81,16 @@ def preprocess_image(image):
     image = cv2.GaussianBlur(image, (3, 3), 0)
     return image
 
+
 def extract_all_features(image):
     lbp_feat = extract_lbp_features(image)
     color_feat = extract_color_features(image)
     shape_feat = extract_shape_features(image)
     return np.concatenate([lbp_feat, color_feat, shape_feat])
 
+
 def calculate_similarity(features1, features2):
-    lbp_len = 256 # Đã thay đổi do LBP mới dùng 256 bins
+    lbp_len = 256  # Đã thay đổi do LBP mới dùng 256 bins
     color_len = 48
 
     lbp_dist = abs(cv2.compareHist(
@@ -103,6 +112,7 @@ def calculate_similarity(features1, features2):
     w1, w2, w3 = 0.3, 0.4, 0.3
     return w1 * lbp_dist + w2 * color_dist + w3 * shape_dist
 
+
 def search_and_display_results(query_image, image_folder, top_k=5):
     query_image = preprocess_image(query_image)
     query_features = extract_all_features(query_image)
@@ -118,11 +128,34 @@ def search_and_display_results(query_image, image_folder, top_k=5):
         results.append((str(img_path), distance, img))
 
     results.sort(key=lambda x: x[1])
-    return results[:top_k]  # Return top K results
+    top_results = results[:top_k]
 
-def find_lbp_images(query_image_path, image_folder, top_k=5):
-    query_image = cv2.imread(query_image_path)
-    if query_image is None:
+    plt.figure(figsize=(15, 3))
+    plt.subplot(1, top_k + 1, 1)
+    query_rgb = cv2.cvtColor(query_image, cv2.COLOR_BGR2RGB)
+    plt.imshow(query_rgb)
+    plt.title('Query Image')
+    plt.axis('off')
+
+    for idx, (path, distance, img) in enumerate(top_results, 2):
+        plt.subplot(1, top_k + 1, idx)
+        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        plt.imshow(img_rgb)
+        plt.title(f'Match {idx - 1}\nDistance: {distance:.4f}')
+        plt.axis('off')
+
+    plt.tight_layout()
+    plt.show()
+
+
+def main():
+    query_img = cv2.imread('43.jpg')
+    if query_img is None:
         print("Không thể đọc ảnh query")
-        return [(str(img_path), distance, img)]
-    return search_and_display_results(query_image, image_folder, top_k)
+        return
+
+    search_and_display_results(query_img, 'lstImg2', top_k=5)
+
+
+if __name__ == "__main__":
+    main()
