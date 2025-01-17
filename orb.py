@@ -20,11 +20,23 @@ def extract_hog(image_path, target_size=(128, 128)):
     return features
 
 # Hàm để trích xuất đặc trưng hình dạng
-def extract_shape_features(image_path):
+def extract_shape_features(image_path, target_size=(128, 128)):
+    # 1. Canny Edge Detection
     image = cv2.imread(image_path)
-    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    _, thresh = cv2.threshold(gray_image, 127, 255, cv2.THRESH_BINARY)
-    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    image = cv2.resize(image, target_size)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    edges = cv2.Canny(gray, 50, 150)
+    
+    # 2. Contour Detection
+    contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    # 3. Mask Creation
+    mask = np.zeros(gray.shape, dtype=np.uint8)
+    cv2.drawContours(mask, contours, -1, (255), 1)
+    
+    # 4. Hu Moments
+    moments = cv2.moments(mask)
+    hu_moments = cv2.HuMoments(moments)
 
     if len(contours) == 0:
         return np.array([0, 0])  # Trả về mặc định nếu không tìm thấy contour
