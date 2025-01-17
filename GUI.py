@@ -51,7 +51,7 @@ def orb():
         best_match_name = os.path.basename(best_match_path)
 
         # Tạo nhãn cho kết quả với kích thước font lớn hơn
-        result_labels[i].config(text=f'{i+1}. Giống với: {best_match_name} (Khoảng cách: {best_distance:.4f})', font=("Arial", 13))
+        result_labels[i].config(text=f'{i+1}. {best_match_name} (Khoảng cách: {best_distance:.4f})', font=("Arial", 13))
         result_labels[i].pack(pady=10)
 
         # Tải và hiển thị ảnh giống nhất
@@ -79,7 +79,7 @@ def lbp():
         best_match_name = os.path.basename(best_match_path)
 
         # Tạo nhãn cho kết quả với kích thước font lớn hơn
-        result_labels[i].config(text=f'{i+1}. Giống với: {best_match_name} (Khoảng cách: {best_distance:.4f})', font=("Arial", 13))
+        result_labels[i].config(text=f'{i+1}. {best_match_name} (Khoảng cách: {best_distance:.4f})', font=("Arial", 13))
         result_labels[i].pack(pady=10)
 
         # Tải và hiển thị ảnh giống nhất
