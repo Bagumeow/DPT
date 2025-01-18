@@ -112,6 +112,8 @@ def lbp():
     except Exception as e:
         print(f"Lỗi trong quá trình xử lý LBP: {e}")
 
+def cnn_sim():
+    pass
 # Hàm xử lý kéo và thả
 def drop(event):
     global demo_image_path
@@ -195,6 +197,9 @@ orb_button.pack(side=tk.LEFT, padx=5)  # Đặt nút ở bên trái
 # Nút LBP
 lbp_button = Button(button_frame, text="LBP", command=lbp, font=("Arial", 13))  # Tăng kích thước font
 lbp_button.pack(side=tk.LEFT, padx=5)  # Đặt nút ở bên trái
+
+cnn_button = Button(button_frame, text="CNN", command=cnn_sim, font=("Arial", 13))  # Tăng kích thước font
+cnn_button.pack(side=tk.LEFT, padx=5) 
 
 # Kích hoạt tính năng kéo và thả
 input_image_label.drop_target_register(DND_FILES)
