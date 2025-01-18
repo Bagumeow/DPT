@@ -5,6 +5,7 @@ from tkinter import filedialog, Label, Button, Frame
 from PIL import Image, ImageTk
 from orb import find_orb_images  # Import hàm từ file orb.py
 from lbp import find_lbp_images  # Import hàm từ file lbp.py
+from cnn import find_sim_cnn
 from tkinterdnd2 import DND_FILES, TkinterDnD  # Nhập mô-đun kéo và thả
 
 # Hàm để xóa nội dung trong ảnh tương tự
@@ -113,7 +114,30 @@ def lbp():
         print(f"Lỗi trong quá trình xử lý LBP: {e}")
 
 def cnn_sim():
-    pass
+    data_folder = 'data'  # Đường dẫn đến folder dữ liệu
+    results = find_sim_cnn(demo_image_path)  # Gọi hàm từ cnn.py
+    print(f"check results: {results}")
+    # Xóa các kết quả cũ
+    clear_results()
+    for i,(fileName, simScore) in enumerate(results):
+        if i ==3:break
+        best_match_path = os.path.join(data_folder,fileName)
+
+        # Tạo nhãn cho kết quả với kích thước font lớn hơn
+        result_labels[i].config(text=f'{i+1}. {fileName} (Khoảng cách: {simScore:.4f})', font=("Arial", 13))
+        result_labels[i].pack(pady=10)
+
+        # Tải và hiển thị ảnh giống nhất
+        try:
+            img = Image.open(best_match_path)
+            target_height = root.winfo_height() // 4  # Chiếm 1/4 chiều cao của ứng dụng
+            img.thumbnail((target_height, target_height), Image.LANCZOS)  # Giữ tỷ lệ khung hình
+            img = ImageTk.PhotoImage(img)
+            match_labels[i].config(image=img)
+            match_labels[i].image = img  # Giữ tham chiếu đến ảnh
+            match_labels[i].pack(pady=10)
+        except Exception as e:
+            print(f'Lỗi khi mở ảnh giống nhất: {e}')
 # Hàm xử lý kéo và thả
 def drop(event):
     global demo_image_path

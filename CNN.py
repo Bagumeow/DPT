@@ -7,12 +7,14 @@ from PIL import Image
 import pickle
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
+from torchvision.models import VGG16_Weights
 
 
 class VGG16FeatureExtractor(nn.Module):
     def __init__(self):
         super(VGG16FeatureExtractor, self).__init__()
-        self.vgg16 = models.vgg16(pretrained=True)
+        weight = VGG16_Weights.IMAGENET1K_V1
+        self.vgg16 = models.vgg16(weights=weight)
         self.features = nn.Sequential(*list(self.vgg16.features.children()))
 
     def forward(self, x):
@@ -36,6 +38,7 @@ def extract_features_cnn(image_path):
 
     with torch.no_grad():
         features = model(image)
+    features = features.view(features.size(0), -1)
 
     return features.squeeze().numpy()
 
@@ -53,9 +56,8 @@ def extract_and_save_features(data_folder, output_file):
         pickle.dump(features_dict, f)
 
 
-def compare_with_saved_features(input_image_path: str, features_file: str = './data/features.pkl'):
+def find_sim_cnn(input_image_path: str, features_file: str = 'features_cnn.pkl')->list:
     input_features = extract_features_cnn(input_image_path)
-
     with open(features_file, 'rb') as f:
         features_dict = pickle.load(f)
 
@@ -71,16 +73,16 @@ def compare_with_saved_features(input_image_path: str, features_file: str = './d
 
 # Example usage
 if __name__ == "__main__":
-    data_folder = 'data'
-    output_file = 'features.pkl'
+    # data_folder = './data'
+    # output_file = './data/features_cnn.pkl'
 
-    # Extract and save features
-    extract_and_save_features(data_folder, output_file)
-    print("Finish extracting and saving features")
-    # Compare input image with saved features
-    # input_image_path = 'path/to/your/input_image.jpg'  # Replace with your input image path
-    # similarities = compare_with_saved_features(input_image_path, output_file)
+    # # Extract and save features
+    # extract_and_save_features(data_folder, output_file)
+    # print("Finish extracting and saving features")
+    # # Compare input image with saved features
+    input_image_path = './demo/demo.jpg'  # Replace with your input image path
+    similarities = find_sim_cnn(input_image_path)
 
-    # # Print the sorted similarities
-    # for filename, similarity in similarities:
-    #     print(f"{filename}: {similarity}")
+    # Print the sorted similarities
+    for filename, similarity in similarities:
+        print(f"{filename}: {similarity}")
