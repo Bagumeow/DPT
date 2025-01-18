@@ -140,7 +140,7 @@ frame = tk.Frame(root)
 frame.pack(expand=True, fill=tk.BOTH)
 
 # Khung chứa ảnh demo
-demo_frame = tk.LabelFrame(frame, text="Chọn ảnh demo", font=("Arial", 13))
+demo_frame = tk.LabelFrame(frame, text="Ảnh được lựa chọn", font=("Arial", 13))
 demo_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 
 # Nhãn hiển thị ảnh đầu vào
